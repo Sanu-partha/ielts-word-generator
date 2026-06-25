@@ -73,19 +73,23 @@ def extract_details(data):
     entry = data[0]
     word = entry.get("word", "")
 
-    meaning, example, synonyms = None, None, []
-    part_of_speech = ""
+    meaning, part_of_speech = None, ""
+    example = None
+    synonyms = []
 
     for meaning_block in entry.get("meanings", []):
-        part_of_speech = meaning_block.get("partOfSpeech", "")
+        block_pos = meaning_block.get("partOfSpeech", "")
         for definition in meaning_block.get("definitions", []):
             if meaning is None:
                 meaning = definition.get("definition")
+                part_of_speech = block_pos
+
+            if example is None and definition.get("example"):
                 example = definition.get("example")
+
             synonyms.extend(definition.get("synonyms", []))
+
         synonyms.extend(meaning_block.get("synonyms", []))
-        if meaning:
-            break
 
     synonyms = list(dict.fromkeys(synonyms))[:5]
 
