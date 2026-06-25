@@ -2,30 +2,66 @@ import random
 import urllib.request
 import json
 
+IELTS_WORDS = [
+    "myriad", "plethora", "arid", "arduous", "ubiquitous", "meticulous", "ambiguous", "pragmatic",
+    "resilient", "transparent", "tenacious", "feasible", "profound", "innovative", "substantial", "controversial",
+    "detrimental", "viable", "scrutinize", "advocate", "consensus", "deteriorate", "facilitate", "implement",
+    "inevitable", "mitigate", "notion", "subsequent", "comprehensive", "diminish", "exacerbate", "fluctuate",
+    "intricate", "plausible", "rigorous", "skeptical", "stagnant", "unprecedented", "versatile", "vibrant",
+    "volatile", "candid", "coherent", "paramount", "discernible", "augment", "constitute", "contemporary",
+    "credible", "denote", "derive", "discrete", "divergent", "elicit", "empirical", "equivalent",
+    "explicit", "hypothesis", "implicit", "incidence", "inherent", "integral", "interpret", "predominant",
+    "prerequisite", "rational", "static", "tangible", "valid", "compelling", "discrepancy", "stringent",
+    "ambivalent", "anomaly", "conducive", "deficit", "disseminate", "dwindle", "endeavor", "escalate",
+    "formidable", "holistic", "imperative", "indispensable", "infer", "inhibit", "innate", "intervene",
+    "lucrative", "manifest", "marginal", "obsolete", "optimal", "perpetuate", "precarious", "precedent",
+    "proliferate", "prudent", "quantify", "rampant", "rectify", "reinforce", "rhetoric", "sustainable",
+    "tentative", "underpin", "vested", "vindicate", "warrant", "albeit", "ascertain", "commensurate",
+    "contentious", "demographic", "dichotomy", "ephemeral", "exemplify", "extrapolate", "facet", "impede",
+    "juxtapose", "nuance", "ostensibly", "parameter", "pertinent", "polarize", "pragmatism", "preclude",
+    "qualitative", "quantitative", "reciprocal", "spectrum", "subsidize", "synthesis", "tenable", "abate",
+    "accentuate", "adverse", "aesthetic", "affluent", "aggregate", "align", "allege", "alleviate",
+    "alternative", "ambivalence", "amplify", "analogous", "anticipate", "apparent", "appraisal", "apt",
+    "arbitrary", "articulate", "artificial", "ascribe", "assert", "assess", "attain", "attribute",
+    "autonomy", "benevolent", "bias", "bolster", "bureaucracy", "capacity", "catalyst", "chronic",
+    "circumvent", "cogent", "collaborate", "collateral", "commodity", "compatible", "compensate", "complement",
+    "comply", "component", "comprise", "conceive", "concession", "concurrent", "confine", "conform",
+    "congruent", "conjecture", "connotation", "consequence", "considerable", "consolidate", "constraint", "contend",
+    "convene", "converge", "correlate", "correspond", "counterpart", "credence", "criteria", "culminate",
+    "cumulative", "curtail", "debilitate", "decisive", "decline", "deduce", "default", "deficient",
+    "define", "delineate", "demonstrate", "denounce", "depict", "deplete", "depreciate", "derogatory",
+    "deviate", "devise", "diagnose", "differentiate", "diffuse", "digress", "disclose", "discourse",
+    "dispel", "disposition", "disproportionate", "distinct", "distort", "diversify", "document", "domain",
+    "dominant", "downturn", "duration", "dynamic", "eccentric", "eclectic", "edifice", "elaborate",
+    "eliminate", "eloquent", "embed", "encompass", "endorse", "enhance", "ensue", "entail",
+    "equate", "equilibrium", "erode", "erratic", "establish", "estimate", "ethical", "evaluate",
+    "evident", "evoke", "exceed", "exclude", "exhaustive", "expand", "expedite", "exploit",
+    "expound", "extensive", "external", "factor", "federal", "flaw", "flexible", "focal",
+    "forfeit", "format", "formulate", "fundamental", "furnish", "generate", "generic", "grant",
+    "guarantee", "hence", "hierarchy", "hinder", "hypothetical", "identical", "identify", "ideology",
+    "ignorance", "illustrate", "immense", "immune", "impact", "implicate", "inadequate", "incentive",
+    "incline", "incompatible", "inconsistent", "incorporate", "index", "indicate", "infinite", "infrastructure",
+    "initiate", "innovate", "insight", "insufficient", "integrate", "intermediate", "internal", "interval",
+    "intrinsic", "invoke", "isolate", "justify", "labor", "layer", "legislate", "liable",
+    "license", "likewise", "locate", "logic", "maintain", "mandate", "manipulate", "margin",
+    "mature", "maximize", "mechanism", "mediate", "medium", "mental", "method", "migrate",
+    "minimal", "minimize", "minor", "mode", "modify", "monitor", "motive", "mutual",
+    "negate", "negligible", "network", "neutral", "nevertheless", "nonetheless", "norm", "notable",
+    "notwithstanding", "nullify", "objective", "obtain", "occupy", "offset", "ongoing",
+    "option", "outcome", "output", "overall", "overlap", "panel",
+]
+
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-
-
-def fetch_url(url):
-    request = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(request, timeout=10) as response:
-        return json.loads(response.read().decode())
-
-
-def get_random_candidate_words(count=5, difficulty=5):
-    url = f"https://random-word-api.herokuapp.com/word?number={count}&diff={difficulty}"
-    try:
-        words = fetch_url(url)
-        return [w.lower() for w in words if w.isalpha()]
-    except Exception as e:
-        print(f"Random word API unavailable ({e}), falling back to curated list.")
-        return []
 
 
 def fetch_word_data(word: str):
     url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
+    request = urllib.request.Request(url, headers=HEADERS)
     try:
-        return fetch_url(url)
-    except Exception:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            return json.loads(response.read().decode())
+    except Exception as e:
+        print(f"Could not fetch '{word}': {e}")
         return None
 
 
@@ -58,38 +94,20 @@ def extract_details(data):
     }
 
 
-def get_daily_word(max_attempts: int = 15):
+def get_daily_word(max_attempts: int = 10):
     attempted = set()
-
-    candidates = get_random_candidate_words(count=5, difficulty=2)
-    candidates += get_random_candidate_words(count=5, difficulty=4)
-
-    random.shuffle(candidates)
-
-    attempts_made = 0
-    index = 0
-    while attempts_made < max_attempts:
-        if index >= len(candidates):
-            more = get_random_candidate_words(count=5, difficulty=2)
-            more += get_random_candidate_words(count=5, difficulty=3)
-            more = [w for w in more if w not in attempted and w not in candidates]
-            if not more:
-                break
-            candidates += more
-
-        word = candidates[index]
-        index += 1
-        if word in attempted:
-            continue
+    for _ in range(max_attempts):
+        candidates = [w for w in IELTS_WORDS if w not in attempted]
+        if not candidates:
+            break
+        word = random.choice(candidates)
         attempted.add(word)
-        attempts_made += 1
 
         data = fetch_word_data(word)
         if data:
             details = extract_details(data)
             if details["meaning"]:
                 return details
-
     return None
 
 
