@@ -61,7 +61,7 @@ def extract_details(data):
 def get_daily_word(max_attempts: int = 15):
     attempted = set()
 
-    candidates = get_random_candidate_words(count=5, difficulty=5)
+    candidates = get_random_candidate_words(count=5, difficulty=2)
     candidates += get_random_candidate_words(count=5, difficulty=4)
 
     random.shuffle(candidates)
@@ -70,8 +70,8 @@ def get_daily_word(max_attempts: int = 15):
     index = 0
     while attempts_made < max_attempts:
         if index >= len(candidates):
-            more = get_random_candidate_words(count=5, difficulty=5)
-            more += get_random_candidate_words(count=5, difficulty=4)
+            more = get_random_candidate_words(count=5, difficulty=2)
+            more += get_random_candidate_words(count=5, difficulty=3)
             more = [w for w in more if w not in attempted and w not in candidates]
             if not more:
                 break
