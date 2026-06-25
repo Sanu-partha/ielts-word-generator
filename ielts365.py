@@ -55,7 +55,13 @@ IELTS_WORDS = [
     "option", "outcome", "output", "overall", "overlap", "panel",
 ]
 
-HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+WORD_OVERRIDES = {
+    "resilient": {
+        "meaning": "Able to recover quickly from difficulties; tough and adaptable.",
+        "example": "She remained resilient despite the setbacks in her career.",
+        "synonyms": ["tough", "adaptable", "hardy", "robust"],
+    },
+}
 
 
 def fetch_word_data(word: str):
