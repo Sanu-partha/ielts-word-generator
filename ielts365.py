@@ -62,6 +62,12 @@ WORD_OVERRIDES = {
         "example": "She remained resilient despite the setbacks in her career.",
         "synonyms": ["tough", "adaptable", "hardy", "robust"],
     },
+    "notion": {
+        "part_of_speech": "noun",
+        "meaning": "An idea, belief, or understanding of something.",
+        "example": "He had a vague notion of how the system worked.",
+        "synonyms": ["idea", "concept", "belief", "impression"],
+    },
 }
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
