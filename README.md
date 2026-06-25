@@ -51,8 +51,6 @@ The repository includes `.github/workflows/daily.yml`, which runs the script aut
 4. Push to `main`. The workflow is now live and will run on schedule
 5. To test immediately without waiting for the schedule, go to the **Actions** tab, select **Daily IELTS Word**, then click **Run workflow**
 
-```
-
 ## Notes
 
 - Some words may have no example sentence or synonyms available from the API. In that case, the script shows a personalised prompt ("Try using '[word]' in your sentence today!") instead of leaving it blank.
