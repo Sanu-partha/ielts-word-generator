@@ -201,14 +201,16 @@ def send_email(subject: str, plain_body: str, html_body: str):
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
     message["From"] = sender_email
-    message["To"] = ", ".join(recipient_emails)
+    message["To"] = sender_email
 
     message.attach(MIMEText(plain_body, "plain", "utf-8"))
     message.attach(MIMEText(html_body, "html", "utf-8"))
 
+    all_recipients = list(dict.fromkeys([sender_email] + recipient_emails))
+
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(sender_email, app_password)
-        server.sendmail(sender_email, recipient_emails, message.as_string())
+        server.sendmail(sender_email, all_recipients, message.as_string())
 
 
 def print_word_card(details):
