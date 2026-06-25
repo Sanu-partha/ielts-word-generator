@@ -73,11 +73,16 @@ def extract_details(data):
     entry = data[0]
     word = entry.get("word", "")
 
+    meanings = entry.get("meanings", [])
+
+    pos_priority = {"verb": 0, "adjective": 1, "adverb": 2, "noun": 3}
+    meanings = sorted(meanings, key=lambda m: pos_priority.get(m.get("partOfSpeech", ""), 4))
+
     meaning, part_of_speech = None, ""
     example = None
     synonyms = []
 
-    for meaning_block in entry.get("meanings", []):
+    for meaning_block in meanings:
         block_pos = meaning_block.get("partOfSpeech", "")
         for definition in meaning_block.get("definitions", []):
             if meaning is None:
