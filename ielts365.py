@@ -57,11 +57,14 @@ IELTS_WORDS = [
 
 WORD_OVERRIDES = {
     "resilient": {
+        "part_of_speech": "adjective",
         "meaning": "Able to recover quickly from difficulties; tough and adaptable.",
         "example": "She remained resilient despite the setbacks in her career.",
         "synonyms": ["tough", "adaptable", "hardy", "robust"],
     },
 }
+
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
 
 def fetch_word_data(word: str):
@@ -121,6 +124,16 @@ def get_daily_word(max_attempts: int = 10):
             break
         word = random.choice(candidates)
         attempted.add(word)
+
+        if word in WORD_OVERRIDES:
+            override = WORD_OVERRIDES[word]
+            return {
+                "word": word,
+                "part_of_speech": override.get("part_of_speech", ""),
+                "meaning": override["meaning"],
+                "example": override.get("example"),
+                "synonyms": override.get("synonyms", []),
+            }
 
         data = fetch_word_data(word)
         if data:
