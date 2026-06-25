@@ -3,6 +3,7 @@ import urllib.request
 import json
 import os
 import smtplib
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 IELTS_WORDS = [
@@ -125,7 +126,7 @@ def build_word_card_text(details):
     if details["example"]:
         lines.append(f"Example        : \"{details['example']}\"")
     else:
-        lines.append("Example        : (none provided by API — write your own IELTS sentence!)")
+        lines.append(f"Example        : Try using \"{details['word']}\" in your sentence today!")
     if details["synonyms"]:
         lines.append(f"Synonyms       : {', '.join(details['synonyms'])}")
     else:
@@ -134,16 +135,76 @@ def build_word_card_text(details):
     return "\n".join(lines)
 
 
-def send_email(subject: str, body: str):
+def build_word_card_html(details):
+    example_html = (
+        f'<p style="margin:0 0 6px 0;"><strong>Example</strong><br>'
+        f'<em>"{details["example"]}"</em></p>'
+        if details["example"]
+        else f'<p style="margin:0 0 6px 0; color:#888;"><strong>Example</strong><br>'
+             f'Try using "{details["word"]}" in your sentence today!</p>'
+    )
+
+    synonyms_html = (
+        f'<p style="margin:0;"><strong>Synonyms</strong><br>{", ".join(details["synonyms"])}</p>'
+        if details["synonyms"]
+        else '<p style="margin:0; color:#888;"><strong>Synonyms</strong><br>None found</p>'
+    )
+
+    pos_html = (
+        f'<span style="display:inline-block; background:#eef2ff; color:#4338ca; '
+        f'font-size:12px; font-weight:600; padding:4px 10px; border-radius:12px; '
+        f'text-transform:uppercase; letter-spacing:0.5px;">{details["part_of_speech"]}</span>'
+        if details["part_of_speech"]
+        else ""
+    )
+
+    html = f"""
+    <div style="font-family:'Segoe UI', Arial, sans-serif; max-width:480px; margin:0 auto;
+                background:#ffffff; border-radius:16px; overflow:hidden;
+                box-shadow:0 4px 16px rgba(0,0,0,0.08); border:1px solid #eee;">
+      <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed); padding:24px 28px;">
+        <p style="margin:0; color:#e0e7ff; font-size:13px; letter-spacing:1px; text-transform:uppercase;">
+          IELTS Word of the Day
+        </p>
+        <h1 style="margin:6px 0 0 0; color:#ffffff; font-size:32px; font-weight:700;">
+          {details['word'].capitalize()}
+        </h1>
+        {pos_html}
+      </div>
+      <div style="padding:24px 28px;">
+        <p style="margin:0 0 16px 0; font-size:15px; color:#1f2937; line-height:1.5;">
+          <strong>Meaning</strong><br>{details['meaning']}
+        </p>
+        <div style="font-size:15px; color:#1f2937; line-height:1.5; margin-bottom:16px;">
+          {example_html}
+        </div>
+        <div style="font-size:15px; color:#1f2937; line-height:1.5;">
+          {synonyms_html}
+        </div>
+      </div>
+      <div style="background:#f9fafb; padding:14px 28px; text-align:center;">
+        <p style="margin:0; font-size:12px; color:#9ca3af;">
+          One word a day, every day for a year &mdash; 365 words to go.
+        </p>
+      </div>
+    </div>
+    """
+    return html
+
+
+def send_email(subject: str, plain_body: str, html_body: str):
     sender_email = os.environ["GMAIL_ADDRESS"]
     app_password = os.environ["GMAIL_APP_PASSWORD"]
     recipient_raw = os.environ.get("RECIPIENT_EMAIL", sender_email)
     recipient_emails = [email.strip() for email in recipient_raw.split(",") if email.strip()]
 
-    message = MIMEText(body, "plain", "utf-8")
+    message = MIMEMultipart("alternative")
     message["Subject"] = subject
     message["From"] = sender_email
     message["To"] = ", ".join(recipient_emails)
+
+    message.attach(MIMEText(plain_body, "plain", "utf-8"))
+    message.attach(MIMEText(html_body, "html", "utf-8"))
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(sender_email, app_password)
@@ -159,9 +220,10 @@ if __name__ == "__main__":
     if result:
         print_word_card(result)
         if "GMAIL_ADDRESS" in os.environ and "GMAIL_APP_PASSWORD" in os.environ:
-            subject = f"IELTS Word of the Day: {result['word'].capitalize()}"
-            body = build_word_card_text(result)
-            send_email(subject, body)
+            subject = f"MADAFAKKA I'M IN YOUR INBOX: {result['word'].capitalize()}"
+            plain_body = build_word_card_text(result)
+            html_body = build_word_card_html(result)
+            send_email(subject, plain_body, html_body)
             print("Email sent successfully.")
     else:
         print("Could not fetch a word today — check your internet connection and try again.")
