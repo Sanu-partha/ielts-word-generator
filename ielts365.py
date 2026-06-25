@@ -220,7 +220,7 @@ if __name__ == "__main__":
     if result:
         print_word_card(result)
         if "GMAIL_ADDRESS" in os.environ and "GMAIL_APP_PASSWORD" in os.environ:
-            subject = f"MADAFAKKA I'M IN YOUR INBOX: {result['word'].capitalize()}"
+            subject = f"IELTS Word of the Day: {result['word'].capitalize()}"
             plain_body = build_word_card_text(result)
             html_body = build_word_card_html(result)
             send_email(subject, plain_body, html_body)
