@@ -1,6 +1,9 @@
 import random
 import urllib.request
 import json
+import os
+import smtplib
+from email.mime.text import MIMEText
 
 IELTS_WORDS = [
     "myriad", "plethora", "arid", "arduous", "ubiquitous", "meticulous", "ambiguous", "pragmatic",
@@ -111,27 +114,54 @@ def get_daily_word(max_attempts: int = 10):
     return None
 
 
-def print_word_card(details):
-    print("=" * 50)
-    print(f"  IELTS WORD OF THE DAY: {details['word'].upper()}")
-    print("=" * 50)
+def build_word_card_text(details):
+    lines = []
+    lines.append("=" * 50)
+    lines.append(f"  IELTS WORD OF THE DAY: {details['word'].upper()}")
+    lines.append("=" * 50)
     if details["part_of_speech"]:
-        print(f"Part of speech : {details['part_of_speech']}")
-    print(f"Meaning        : {details['meaning']}")
+        lines.append(f"Part of speech : {details['part_of_speech']}")
+    lines.append(f"Meaning        : {details['meaning']}")
     if details["example"]:
-        print(f"Example        : \"{details['example']}\"")
+        lines.append(f"Example        : \"{details['example']}\"")
     else:
-        print("Example        : (none provided by API — write your own IELTS sentence!)")
+        lines.append("Example        : (none provided by API — write your own IELTS sentence!)")
     if details["synonyms"]:
-        print(f"Synonyms       : {', '.join(details['synonyms'])}")
+        lines.append(f"Synonyms       : {', '.join(details['synonyms'])}")
     else:
-        print("Synonyms       : (none found)")
-    print("=" * 50)
+        lines.append("Synonyms       : (none found)")
+    lines.append("=" * 50)
+    return "\n".join(lines)
+
+
+def send_email(subject: str, body: str):
+    sender_email = os.environ["GMAIL_ADDRESS"]
+    app_password = os.environ["GMAIL_APP_PASSWORD"]
+    recipient_raw = os.environ.get("RECIPIENT_EMAIL", sender_email)
+    recipient_emails = [email.strip() for email in recipient_raw.split(",") if email.strip()]
+
+    message = MIMEText(body, "plain", "utf-8")
+    message["Subject"] = subject
+    message["From"] = sender_email
+    message["To"] = ", ".join(recipient_emails)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(sender_email, app_password)
+        server.sendmail(sender_email, recipient_emails, message.as_string())
+
+
+def print_word_card(details):
+    print(build_word_card_text(details))
 
 
 if __name__ == "__main__":
     result = get_daily_word()
     if result:
         print_word_card(result)
+        if "GMAIL_ADDRESS" in os.environ and "GMAIL_APP_PASSWORD" in os.environ:
+            subject = f"IELTS Word of the Day: {result['word'].capitalize()}"
+            body = build_word_card_text(result)
+            send_email(subject, body)
+            print("Email sent successfully.")
     else:
         print("Could not fetch a word today — check your internet connection and try again.")
