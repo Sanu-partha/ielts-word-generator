@@ -46,8 +46,8 @@ IELTS_WORDS = [
     "ignorance", "illustrate", "immense", "immune", "impact", "implicate", "inadequate", "incentive",
     "incline", "incompatible", "inconsistent", "incorporate", "index", "indicate", "infinite", "infrastructure",
     "initiate", "innovate", "insight", "insufficient", "integrate", "intermediate", "internal", "interval",
-    "intrinsic", "invoke", "isolate", "justify", "labor", "layer", "legislate", "liable",
-    "license", "likewise", "locate", "logic", "maintain", "mandate", "manipulate", "margin",
+    "intrinsic", "invoke", "isolate", "justify", "linchpin", "lackluster", "lavish", "liable",
+    "license", "luminous", "lucid", "luxuriant", "maintain", "mandate", "manipulate", "margin",
     "mature", "maximize", "mechanism", "mediate", "medium", "mental", "method", "migrate",
     "minimal", "minimize", "minor", "mode", "modify", "monitor", "motive", "mutual",
     "negate", "negligible", "network", "neutral", "nevertheless", "nonetheless", "norm", "notable",
@@ -67,6 +67,12 @@ WORD_OVERRIDES = {
         "meaning": "An idea, belief, or understanding of something.",
         "example": "He had a vague notion of how the system worked.",
         "synonyms": ["idea", "concept", "belief", "impression"],
+    },
+    "mechanism": {
+        "part_of_speech": "noun",
+        "meaning": "A process, system, or set of steps by which something is done or achieved.",
+        "example": "The government introduced a new mechanism to resolve trade disputes.",
+        "synonyms": ["process", "system", "method", "procedure"],
     },
 }
 
@@ -97,19 +103,35 @@ def extract_details(data):
     example = None
     synonyms = []
 
+    fallback = None
+
     for meaning_block in meanings:
         block_pos = meaning_block.get("partOfSpeech", "")
+        block_synonyms = meaning_block.get("synonyms", [])
+
         for definition in meaning_block.get("definitions", []):
-            if meaning is None:
-                meaning = definition.get("definition")
+            def_meaning = definition.get("definition")
+            def_example = definition.get("example")
+            def_synonyms = list(definition.get("synonyms", [])) or list(block_synonyms)
+
+            if not def_meaning:
+                continue
+
+            if fallback is None:
+                fallback = (def_meaning, block_pos, def_example, def_synonyms)
+
+            if def_example or def_synonyms:
+                meaning = def_meaning
                 part_of_speech = block_pos
+                example = def_example
+                synonyms = def_synonyms
+                break
 
-            if example is None and definition.get("example"):
-                example = definition.get("example")
+        if meaning:
+            break
 
-            synonyms.extend(definition.get("synonyms", []))
-
-        synonyms.extend(meaning_block.get("synonyms", []))
+    if meaning is None and fallback is not None:
+        meaning, part_of_speech, example, synonyms = fallback
 
     synonyms = list(dict.fromkeys(synonyms))[:5]
 
